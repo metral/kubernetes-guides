@@ -107,6 +107,10 @@ export const clusterName = cluster.name;
 // Expose a k8s provider instance of the cluster.
 const provider = new k8s.Provider(`${name}-gke`, { kubeconfig: k8sConfig }, {dependsOn: cluster });
 
+/*
+ * Configure Namespaces and Quotas.
+ */
+
 // Create Kubernetes namespaces.
 const clusterSvcsNamespace = new k8s.core.v1.Namespace("cluster-svcs", undefined, {
     provider: provider,
@@ -136,6 +140,34 @@ const quotaAppNamespace = new k8s.core.v1.ResourceQuota("apps",
             },
         },
 }, { provider: provider });
+
+/*
+ * Configure Storage
+ */
+
+// Create the standard StorageClass.
+const sc = new k8s.storage.v1.StorageClass("standard",
+    {
+        provisioner: "kubernetes.io/gce-pd",
+        parameters: {
+            "type": "pd-standard",
+            "replication-type": "none"
+        },
+}, { provider: provider });
+
+// Create a Persistent Volume Claim on the StorageClass.
+const myPvc = new k8s.core.v1.PersistentVolumeClaim("mypvc", {
+        spec: {
+            accessModes: ["ReadWriteOnce"],
+            storageClassName: sc.metadata.name,
+            resources: {requests: {storage: "1Gi"}}
+        }
+}, { provider: provider });
+
+
+/*
+ * Configure Developer RBAC, PodSecurityPolicy and it's RBAC.
+ */
 
 // Create a limited role for the `pulumi:devs` to use in the apps namespace.
 const devsGroupRole = new k8s.rbac.v1.Role(`pulumi-devs`,
@@ -179,25 +211,6 @@ const devsGroupRoleBinding = pulumi.all([
             },
         }, { provider: provider })
 });
-
-// Create the standard StorageClass.
-const sc = new k8s.storage.v1.StorageClass("standard",
-    {
-        provisioner: "kubernetes.io/gce-pd",
-        parameters: {
-            "type": "pd-standard",
-            "replication-type": "none"
-        },
-}, { provider: provider });
-
-// Create a Persistent Volume Claim on the StorageClass.
-const myPvc = new k8s.core.v1.PersistentVolumeClaim("mypvc", {
-        spec: {
-            accessModes: ["ReadWriteOnce"],
-            storageClassName: sc.metadata.name,
-            resources: {requests: {storage: "1Gi"}}
-        }
-}, { provider: provider });
 
 // Create a restrictive PodSecurityPolicy.
 const restrictivePSP = new k8s.policy.v1beta1.PodSecurityPolicy("demo-restrictive", {
@@ -286,6 +299,10 @@ const allowRestrictedAppsCRB = pulumi.all([
         }],
     }, { provider: provider });
 });
+
+/*
+ * Configure NGINX RBAC
+ */
 
 // Create a ClusterRoleBinding for the SeviceAccounts of Namespace ingress-nginx
 // to the ClusterRole that uses the privileged PodSecurityPolicy.

@@ -30,7 +30,7 @@ export function bindToRole(
 }
 
 export function createServiceAccountKey(name: string, sa: gcp.serviceAccount.Account): gcp.serviceAccount.Key {
-    return new gcp.serviceAccount.Key(name, { serviceAccountId: sa.name });
+    return new gcp.serviceAccount.Key(name, { serviceAccountId: sa.name }, {additionalSecretOutputs: ["privateKey"]});
 }
 
 export function clientSecret(key: gcp.serviceAccount.Key): pulumi.Output<any> {

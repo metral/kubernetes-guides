@@ -24,13 +24,13 @@ const cluster = new gcp.container.Cluster(`${name}`, {
     podSecurityPolicyConfig: { enabled: true },
     network: config.networkName,
     subnetwork: config.subnetworkName,
-    minMasterVersion: "1.14.7-gke.17",
+    minMasterVersion: "1.15.7-gke.2",
     masterAuth: { username: "example-user", password: password },
 });
 
 const standardNodes = new gcp.container.NodePool("standard-nodes", {
     cluster: cluster.name,
-    version: "1.14.7-gke.17",
+    version: "1.15.7-gke.2",
     autoscaling: {minNodeCount: 0, maxNodeCount: 3},
     initialNodeCount: 2,
     nodeConfig: {
@@ -48,7 +48,7 @@ const standardNodes = new gcp.container.NodePool("standard-nodes", {
 
 const performantNodes = new gcp.container.NodePool("performant-nodes", {
     cluster: cluster.name,
-    version: "1.14.7-gke.17",
+    version: "1.15.7-gke.2",
     autoscaling: {minNodeCount: 0, maxNodeCount: 3},
     initialNodeCount: 2,
     nodeConfig: {
@@ -144,18 +144,18 @@ const devsGroupRole = new k8s.rbac.v1.Role(`pulumi-devs`,
         rules: [
             {
                 apiGroups: [""],
-                resources: ["configmap", "pods", "secrets", "services", "persistentvolumeclaims"],
-                verbs: ["get", "list", "watch", "create", "update", "delete"],
+                resources: ["configmaps", "pods", "secrets", "services", "endpoints", "persistentvolumeclaims"],
+                verbs: ["get", "patch", "list", "watch", "create", "update", "delete"],
             },
             {
                 apiGroups: ["rbac.authorization.k8s.io"],
                 resources: ["clusterrole", "clusterrolebinding", "role", "rolebinding"],
-                verbs: ["get", "list", "watch", "create", "update", "delete"],
+                verbs: ["get", "patch", "list", "watch", "create", "update", "delete"],
             },
             {
                 apiGroups: ["extensions", "apps"],
                 resources: ["replicasets", "deployments"],
-                verbs: ["get", "list", "watch", "create", "update", "delete"],
+                verbs: ["get", "patch", "list", "watch", "create", "update", "delete"],
             },
         ],
 }, { provider: provider });

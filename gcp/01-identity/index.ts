@@ -52,7 +52,12 @@ const devsIamServiceAccount = new gcp.serviceAccount.Account(devsName, {
     displayName: "Kubernetes Developers",
 });
 
-
+// Alternate form of setting devs RBAC using GCP predefined roles, instead of
+// using devsGroupRole and devsGroupRoleBinding in gcp/03-cluster-configuration.
+//
+// See for more info:
+// https://cloud.google.com/iam/docs/understanding-roles#kubernetes-engine-roles
+//
 // Bind the devs ServiceAccount to be a GKE cluster developer.
 util.bindToRole(`${devsName}-k8s`, devsIamServiceAccount, {
     project: config.project,
